@@ -9,19 +9,18 @@ type SudokuElem struct {
 }
 
 func (elem SudokuElem) String() string {
-	return fmt.Sprint("%v",elem.GetValue())
+	return fmt.Sprint("%v", elem.GetValue())
 }
 
 func (elem *SudokuElem) SetValue(value int8) {
 	var _Tp uint16
 	_Tp = (uint16(value)) << 12
 	elem.internal_ |= _Tp
-} 
+}
 
 func (elem SudokuElem) GetValue() int8 {
 	return int8(elem.internal_ >> 12)
 }
-
 
 func (elem SudokuElem) CacheNum() int8 {
 	var _Ret int8 = 0
@@ -33,12 +32,11 @@ func (elem SudokuElem) CacheNum() int8 {
 }
 
 func (elem *SudokuElem) PushCacheBack(num int8) {
-	elem.internal_ |= ( 0x01 << uint(num - 1) );
+	elem.internal_ |= (0x01 << uint(num-1))
 }
 
-
 func (elem *SudokuElem) RemoveFromCache(num int8) {
-	var _Tp uint16 = (0x01 << uint(num - 1) )
+	var _Tp uint16 = (0x01 << uint(num-1))
 	_Tp = ^_Tp
 	elem.internal_ &= _Tp
 }
@@ -46,7 +44,7 @@ func (elem *SudokuElem) RemoveFromCache(num int8) {
 func (elem *SudokuElem) PopCacheFront() int8 {
 	var num uint8 = 1
 	for ; num <= 9; num++ {
-		if (uint16(0x01) << (num - 1)) & elem.internal_ > 0 {
+		if (uint16(0x01)<<(num-1))&elem.internal_ > 0 {
 			elem.internal_ &= ^(0x01 << (num - 1))
 			return int8(num)
 		}
@@ -63,5 +61,3 @@ func (elem *SudokuElem) PushAllToCache() {
 	var _Tp uint16 = 511
 	elem.internal_ |= _Tp
 }
-
-
