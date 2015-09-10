@@ -287,12 +287,11 @@ func (suduku *Sudoku) GenerateSudoku(rels, problemes chan *Sudoku) bool {
 			_TpSudoku := *suduku
 			_TpSudoku.Input[MinX][MinY].SetValue(_TpSudoku.Input[MinX][MinY].PopCacheFront())
 			_TpSudoku.Input[MinX][MinY].RemoveAllCache()
-
-			_TpSudoku.GenerateSudoku(rels, problemes)
+			
+			problemes <- &_TpSudoku
 			suduku.Input[MinX][MinY].PopCacheFront()
 		}
 	} else if MaxC == 1 && MinC == 9 {
-		///suduku.WriteJsonOut("Output.json")
 		rels <- suduku
 		return true
 	}
