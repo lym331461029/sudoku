@@ -1,0 +1,12 @@
+bin**/*
+pkg**/*
+logs**/*
+pprof**/*
+_obj
+*.exe
+*.out
+*.di
+*.callgrind
+.DS_Store
+dump.rdb
+.srclib-*

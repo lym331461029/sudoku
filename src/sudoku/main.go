@@ -5,21 +5,19 @@ package main
 
 import (
 	"time"
-
-	"github.com/lyming/sudoku"
 )
 
 const (
-	inputfile  string = "Input.json"
+	inputfile  string = ".\\Input.json"
 	outputfile string = "Output.json"
 )
 
 func main() {
-	var sdk sudoku.Sudoku
+	var sdk Sudoku
 	sdk.ReadJsonInit(inputfile)
 
-	rels := make(chan *sudoku.Sudoku, 100)
-	problems := make(chan *sudoku.Sudoku, 10)
+	rels := make(chan *Sudoku, 100)
+	problems := make(chan *Sudoku, 10)
 	flagxx := make(chan bool)
 
 	for i := 0; i < 4; i++ {
@@ -31,7 +29,7 @@ func main() {
 	}
 
 	go func() {
-		finish := time.After(time.Duration(1000000))
+		finish := time.After(2 * time.Second)
 		endflag := false
 		for {
 			if !endflag {
