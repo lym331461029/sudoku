@@ -1,4 +1,4 @@
-package sudoku
+package main
 
 import (
 	"bufio"
@@ -34,7 +34,7 @@ func (suduku *Sudoku) UnmarshalJSON(data []byte) (err error) {
 
 	sudokuinit := struct {
 		Input       [9][9]uint8 `json:"input"`
-		ProblemType string `json:"problemType"`
+		ProblemType string      `json:"problemType"`
 	}{}
 
 	if err = json.Unmarshal(data, &sudokuinit); err != nil {
@@ -56,7 +56,7 @@ func (suduku *Sudoku) UnmarshalJSON(data []byte) (err error) {
 func (suduku Sudoku) MarshalJSON() ([]byte, error) {
 	sudokuinit := struct {
 		Input       [9][9]uint8 `json:"input"`
-		ProblemType string `json:"problemType"`
+		ProblemType string      `json:"problemType"`
 	}{}
 
 	for i := 0; i < 9; i++ {
@@ -173,7 +173,7 @@ func (suduku *Sudoku) XRestrict(x, y int8) int8 {
 func (suduku *Sudoku) PercentumRestrict(x, y int8) int8 {
 	generateRestrictFunc(Start1, End1, Start1, End1)(suduku, x, y)
 	generateRestrictFunc(Start2, End2, Start2, End2)(suduku, x, y)
-	
+
 	if x+y == 8 {
 		for i := 0; i < 9; i++ {
 			if x == int8(i) {
@@ -198,24 +198,23 @@ func (suduku *Sudoku) SuperRestrict(x, y int8) int8 {
 
 //颜色数独限定
 func (suduku *Sudoku) ColorRestrict(x, y int8) int8 {
-	var _TpX, _TpY, i,j int8
-	_TpX, _TpY = x % 3, y % 3
-	
-	for i = 0; i < 9; i+=3 {
-		for j = 0; j < 9; j+=3 {
-			if i + _TpX == x && j + _TpY == y {
+	var _TpX, _TpY, i, j int8
+	_TpX, _TpY = x%3, y%3
+
+	for i = 0; i < 9; i += 3 {
+		for j = 0; j < 9; j += 3 {
+			if i+_TpX == x && j+_TpY == y {
 				continue
 			}
-			
-			if suduku.Input[i + _TpX][j + _TpY].GetValue() > 0 {
+
+			if suduku.Input[i+_TpX][j+_TpY].GetValue() > 0 {
 				suduku.Input[x][y].RemoveFromCache(
-					suduku.Input[i + _TpX][j + _TpY].GetValue())
+					suduku.Input[i+_TpX][j+_TpY].GetValue())
 			}
 		}
 	}
 	return suduku.Input[x][y].CacheNum()
 }
-
 
 func (suduku *Sudoku) GenerateSudoku(rels, problemes chan *Sudoku) bool {
 	var MinX, MinY, MinC int8
@@ -246,11 +245,11 @@ func (suduku *Sudoku) GenerateSudoku(rels, problemes chan *Sudoku) bool {
 					if tpNum > 0 && suduku.ProblemType == 'U' {
 						tpNum = suduku.SuperRestrict(i, j)
 					}
-					
+
 					if tpNum > 0 && suduku.ProblemType == 'P' {
 						tpNum = suduku.PercentumRestrict(i, j)
 					}
-					
+
 					if tpNum > 0 && suduku.ProblemType == 'C' {
 						tpNum = suduku.ColorRestrict(i, j)
 					}
@@ -287,7 +286,7 @@ func (suduku *Sudoku) GenerateSudoku(rels, problemes chan *Sudoku) bool {
 			_TpSudoku := *suduku
 			_TpSudoku.Input[MinX][MinY].SetValue(_TpSudoku.Input[MinX][MinY].PopCacheFront())
 			_TpSudoku.Input[MinX][MinY].RemoveAllCache()
-			
+
 			problemes <- &_TpSudoku
 			suduku.Input[MinX][MinY].PopCacheFront()
 		}

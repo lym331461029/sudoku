@@ -4,23 +4,24 @@
 package main
 
 import (
-	"github.com/lyming/sudoku"
 	"time"
+
+	"github.com/lyming/sudoku"
 )
 
 const (
-	inputfile string = "Input.json"
-	outputfile string ="Output.json"
+	inputfile  string = "Input.json"
+	outputfile string = "Output.json"
 )
 
-func main() { 
+func main() {
 	var sdk sudoku.Sudoku
 	sdk.ReadJsonInit(inputfile)
-	
+
 	rels := make(chan *sudoku.Sudoku, 100)
 	problems := make(chan *sudoku.Sudoku, 10)
 	flagxx := make(chan bool)
-	
+
 	for i := 0; i < 4; i++ {
 		go func() {
 			for sudokuinit := range problems {
@@ -28,7 +29,7 @@ func main() {
 			}
 		}()
 	}
-	
+
 	go func() {
 		finish := time.After(time.Duration(1000000))
 		endflag := false
@@ -48,14 +49,12 @@ func main() {
 		}
 		flagxx <- true
 	}()
-	
-	problems <- &sdk 
-	
-	
+
+	problems <- &sdk
+
 	for _ = range flagxx {
 		close(problems)
 		close(rels)
-		return 
+		return
 	}
 }
-

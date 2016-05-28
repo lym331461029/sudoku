@@ -1,4 +1,4 @@
-package sudoku
+package main
 
 import (
 	"fmt"
