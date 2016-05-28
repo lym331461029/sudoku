@@ -4,7 +4,10 @@
 package main
 
 import (
-	"time"
+	"encoding/json"
+	"log"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -13,46 +16,83 @@ const (
 )
 
 func main() {
+	gin.SetMode(gin.DebugMode)
+	router := gin.Default()
+	router.POST("/sudoku", solveSuduku)
+
+	router.Run(":9090")
+}
+
+type ResponseContent struct {
+	Code int     `json:"code"`
+	Msg  string  `json:"msg"`
+	Sdk  *Sudoku `json:"result"`
+}
+
+func ResLogicError(errCode int, errMsg string, resCont *ResponseContent, c *gin.Context) {
+	resCont.Code = errCode
+	resCont.Msg = errMsg
+	c.JSON(200, resCont)
+}
+
+func solveSuduku(c *gin.Context) {
+	sdk := &Sudoku{}
+	respCont := &ResponseContent{}
+	respCont.Code = 0
+	respCont.Msg = "success"
+
+	decoder := json.NewDecoder(c.Request.Body)
+	err := decoder.Decode(sdk)
+	if err != nil {
+		if err != nil {
+			log.Println(err)
+			ResLogicError(-1, err.Error(), respCont, c)
+			return
+		}
+	}
+	c.Request.Body.Close()
+
+	rels := make(chan *Sudoku, 100)
+	go func() {
+		sdk.GenerateSudoku(rels)
+		close(rels)
+		log.Println("计算已经完成...")
+	}()
+
+	for relSudoku := range rels {
+		respCont.Sdk = relSudoku
+	}
+	bytes, err := json.MarshalIndent(respCont, " ", " ")
+	if err != nil {
+		if err != nil {
+			log.Println(err)
+			ResLogicError(-1, err.Error(), respCont, c)
+			return
+		}
+	}
+
+	c.String(200, string(bytes))
+	//c.JSON(200, respCont)
+
+}
+
+/*
+func main() {
 	var sdk Sudoku
 	sdk.ReadJsonInit(inputfile)
 
 	rels := make(chan *Sudoku, 100)
-	problems := make(chan *Sudoku, 10)
-	flagxx := make(chan bool)
-
-	for i := 0; i < 4; i++ {
-		go func() {
-			for sudokuinit := range problems {
-				sudokuinit.GenerateSudoku(rels, problems)
-			}
-		}()
-	}
 
 	go func() {
-		finish := time.After(2 * time.Second)
-		endflag := false
-		for {
-			if !endflag {
-				select {
-				case rel := <-rels:
-					rel.WriteJsonOut(outputfile)
-				case <-finish:
-					endflag = true
-					break
-				}
-			}
-			if endflag {
-				break
-			}
-		}
-		flagxx <- true
+		sdk.GenerateSudoku(rels)
+		close(rels)
+		fmt.Println("计算已经完成...")
 	}()
 
-	problems <- &sdk
-
-	for _ = range flagxx {
-		close(problems)
-		close(rels)
-		return
+	for relSudoku := range rels {
+		encolder := json.NewEncoder(os.Stdout)
+		encolder.Encode(relSudoku)
+		//relSudoku.WriteJsonOut(outputfile)
 	}
 }
+*/

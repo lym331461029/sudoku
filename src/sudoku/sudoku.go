@@ -2,10 +2,13 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
+	"strconv"
 )
 
 const (
@@ -54,18 +57,42 @@ func (suduku *Sudoku) UnmarshalJSON(data []byte) (err error) {
 }
 
 func (suduku Sudoku) MarshalJSON() ([]byte, error) {
-	sudokuinit := struct {
-		Input       [9][9]uint8 `json:"input"`
-		ProblemType string      `json:"problemType"`
-	}{}
+	/*
+		sudokuinit := struct {
+			Input [9][9]uint8 `json:"data"`
+			//ProblemType string      `json:"problemType"`
+		}{}
 
+		for i := 0; i < 9; i++ {
+			for j := 0; j < 9; j++ {
+				sudokuinit.Input[i][j] = uint8(suduku.Input[i][j].GetValue())
+			}
+		}
+		//sudokuinit.ProblemType = string(suduku.ProblemType)
+		return json.MarshalIndent(sudokuinit, "", "\t")
+	*/
+
+	buf := bytes.NewBuffer(nil)
+	buf.WriteString("[\n")
 	for i := 0; i < 9; i++ {
-		for j := 0; j < 9; j++ {
-			sudokuinit.Input[i][j] = uint8(suduku.Input[i][j].GetValue())
+		buf.WriteString("\t\"")
+		for j := 0; j <= 7; j++ {
+			buf.WriteString(strconv.FormatInt(int64(suduku.Input[i][j].GetValue()), 10))
+			buf.WriteString(",")
+		}
+
+		buf.WriteString(strconv.FormatInt(int64(suduku.Input[i][8].GetValue()), 10))
+		if i < 8 {
+			buf.WriteString("\",\n")
+		} else {
+			buf.WriteString("\"\n")
 		}
 	}
-	sudokuinit.ProblemType = string(suduku.ProblemType)
-	return json.Marshal(sudokuinit)
+	buf.WriteString("]")
+
+	log.Print(buf.String())
+	return buf.Bytes(), nil
+
 }
 
 func (suduku *Sudoku) ReadJsonInit(filename string) error {
@@ -216,7 +243,7 @@ func (suduku *Sudoku) ColorRestrict(x, y int8) int8 {
 	return suduku.Input[x][y].CacheNum()
 }
 
-func (suduku *Sudoku) GenerateSudoku(rels, problemes chan *Sudoku) bool {
+func (suduku *Sudoku) GenerateSudoku(rels chan *Sudoku) bool {
 	var MinX, MinY, MinC int8
 	var MaxC int8
 	var next bool = true
@@ -287,7 +314,8 @@ func (suduku *Sudoku) GenerateSudoku(rels, problemes chan *Sudoku) bool {
 			_TpSudoku.Input[MinX][MinY].SetValue(_TpSudoku.Input[MinX][MinY].PopCacheFront())
 			_TpSudoku.Input[MinX][MinY].RemoveAllCache()
 
-			problemes <- &_TpSudoku
+			//problemes <- &_TpSudoku
+			_TpSudoku.GenerateSudoku(rels)
 			suduku.Input[MinX][MinY].PopCacheFront()
 		}
 	} else if MaxC == 1 && MinC == 9 {
