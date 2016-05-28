@@ -1,6 +1,3 @@
-// sudokutest project main.go
-
-///数独计算测试程序
 package main
 
 import (
@@ -16,7 +13,7 @@ const (
 )
 
 func main() {
-	gin.SetMode(gin.DebugMode)
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.POST("/sudoku", solveSuduku)
 
@@ -24,9 +21,9 @@ func main() {
 }
 
 type ResponseContent struct {
-	Code int     `json:"code"`
-	Msg  string  `json:"msg"`
-	Sdk  *Sudoku `json:"result"`
+	Code int       `json:"code"`
+	Msg  string    `json:"msg"`
+	Sdks []*Sudoku `json:"result"`
 }
 
 func ResLogicError(errCode int, errMsg string, resCont *ResponseContent, c *gin.Context) {
@@ -60,7 +57,7 @@ func solveSuduku(c *gin.Context) {
 	}()
 
 	for relSudoku := range rels {
-		respCont.Sdk = relSudoku
+		respCont.Sdks = append(respCont.Sdks, relSudoku)
 	}
 	bytes, err := json.MarshalIndent(respCont, " ", " ")
 	if err != nil {
@@ -72,8 +69,6 @@ func solveSuduku(c *gin.Context) {
 	}
 
 	c.String(200, string(bytes))
-	//c.JSON(200, respCont)
-
 }
 
 /*
