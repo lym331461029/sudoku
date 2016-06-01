@@ -37,8 +37,7 @@ func (elem *SudokuElem) PushCacheBack(num int8) {
 
 func (elem *SudokuElem) RemoveFromCache(num int8) {
 	var _Tp uint16 = (0x01 << uint(num-1))
-	_Tp = ^_Tp
-	elem.internal_ &= _Tp
+	elem.internal_ &^= _Tp
 }
 
 func (elem *SudokuElem) PopCacheFront() int8 {
