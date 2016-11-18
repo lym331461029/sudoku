@@ -6,6 +6,7 @@ import (
 
 type SudokuElem struct {
 	internal_ uint16
+	area_     int8
 }
 
 func (elem SudokuElem) String() string {
@@ -59,4 +60,12 @@ func (elem *SudokuElem) RemoveAllCache() {
 func (elem *SudokuElem) PushAllToCache() {
 	var _Tp uint16 = 511
 	elem.internal_ |= _Tp
+}
+
+func (elem *SudokuElem) SetArea(an int8) {
+	elem.area_ = an
+}
+
+func (elem SudokuElem) GetArea() int8 {
+	return elem.area_
 }

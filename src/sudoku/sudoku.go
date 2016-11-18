@@ -18,9 +18,15 @@ const (
 	End2   int8 = 7
 )
 
+type Point struct {
+	X int8
+	Y int8
+}
+
 type Sudoku struct {
 	Input       [9][9]SudokuElem
 	ProblemType byte
+	AreaMap     map[int8][]Point
 }
 
 func (s Sudoku) String() string {
@@ -33,26 +39,52 @@ func (s Sudoku) String() string {
 	return str
 }
 
-func (suduku *Sudoku) UnmarshalJSON(data []byte) (err error) {
+func (suduku *Sudoku) UnmarshalJSON(data []byte) error {
+	type mSudoku struct {
+		Input       [9][9]int `json:"input"`
+		ProblemType string    `json:"problemType"`
+	}
 
-	sudokuinit := struct {
-		Input       [9][9]uint8 `json:"input"`
-		ProblemType string      `json:"problemType"`
-	}{}
-
-	if err = json.Unmarshal(data, &sudokuinit); err != nil {
+	ms := &mSudoku{}
+	err := json.Unmarshal(data, ms)
+	if err != nil {
 		return err
 	}
 
-	for i := 0; i < 9; i++ {
-		for j := 0; j < 9; j++ {
-			suduku.Input[i][j].SetValue(int8(sudokuinit.Input[i][j]))
-			if suduku.Input[i][j].GetValue() == 0 {
-				suduku.Input[i][j].PushAllToCache()
+	if ms.ProblemType != "A" {
+		for i := 0; i < 9; i++ {
+			for j := 0; j < 9; j++ {
+				suduku.Input[i][j].SetValue(int8(ms.Input[i][j]))
+				if suduku.Input[i][j].GetValue() == 0 {
+					suduku.Input[i][j].PushAllToCache()
+				}
 			}
 		}
+		suduku.ProblemType = ms.ProblemType[0]
+	} else {
+		for i := 0; i < 9; i++ {
+			for j := 0; j < 9; j++ {
+				areaNo := ms.Input[i][j] / 10
+				value := ms.Input[i][j] % 10
+				suduku.Input[i][j].SetValue(int8(value))
+				suduku.Input[i][j].SetArea(int8(areaNo))
+				if suduku.Input[i][j].GetValue() == 0 {
+					suduku.Input[i][j].PushAllToCache()
+				}
+
+				if suduku.AreaMap == nil {
+					suduku.AreaMap = map[int8][]Point{}
+				}
+
+				if _, ok := suduku.AreaMap[int8(areaNo)]; ok {
+					suduku.AreaMap[int8(areaNo)] = append(suduku.AreaMap[int8(areaNo)], Point{X: int8(i), Y: int8(j)})
+				} else {
+					suduku.AreaMap[int8(areaNo)] = []Point{Point{X: int8(i), Y: int8(j)}}
+				}
+			}
+		}
+		suduku.ProblemType = ms.ProblemType[0]
 	}
-	suduku.ProblemType = sudokuinit.ProblemType[0]
 	return nil
 }
 
@@ -243,6 +275,19 @@ func (suduku *Sudoku) ColorRestrict(x, y int8) int8 {
 	return suduku.Input[x][y].CacheNum()
 }
 
+//区域限制
+func (suduku *Sudoku) AreaRestrict(x, y int8) int8 {
+	an := suduku.Input[x][y].GetArea()
+	aresPoints := suduku.AreaMap[an]
+
+	for _, p := range aresPoints {
+		if suduku.Input[p.X][p.Y].GetValue() > 0 {
+			suduku.Input[x][y].RemoveFromCache(suduku.Input[p.X][p.Y].GetValue())
+		}
+	}
+	return suduku.Input[x][y].CacheNum()
+}
+
 func (suduku *Sudoku) GenerateSudoku(rels chan *Sudoku) bool {
 	var MinX, MinY, MinC int8
 	var MaxC int8
@@ -279,6 +324,10 @@ func (suduku *Sudoku) GenerateSudoku(rels chan *Sudoku) bool {
 
 					if tpNum > 0 && suduku.ProblemType == 'C' {
 						tpNum = suduku.ColorRestrict(i, j)
+					}
+
+					if tpNum > 0 && suduku.ProblemType == 'A' {
+						tpNum = suduku.AreaRestrict(i, j)
 					}
 
 					if tpNum == 0 {

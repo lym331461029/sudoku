@@ -12,9 +12,20 @@ const (
 	outputfile string = "Output.json"
 )
 
+func myLoger(c *gin.Context) {
+	c.Next()
+	log.Printf("RemoteAddr: %s, HttpCode: %d, BodySize: %d\n",
+		c.Request.RemoteAddr, c.Writer.Status(), c.Writer.Size())
+	if c.Writer.Status() == 500 {
+		c.Writer.WriteHeader(200)
+	}
+}
+
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
+
+	router.Use(myLoger)
 	router.POST("/sudoku", solveSuduku)
 
 	router.Run(":9090")
@@ -70,24 +81,3 @@ func solveSuduku(c *gin.Context) {
 
 	c.String(200, string(bytes))
 }
-
-/*
-func main() {
-	var sdk Sudoku
-	sdk.ReadJsonInit(inputfile)
-
-	rels := make(chan *Sudoku, 100)
-
-	go func() {
-		sdk.GenerateSudoku(rels)
-		close(rels)
-		fmt.Println("计算已经完成...")
-	}()
-
-	for relSudoku := range rels {
-		encolder := json.NewEncoder(os.Stdout)
-		encolder.Encode(relSudoku)
-		//relSudoku.WriteJsonOut(outputfile)
-	}
-}
-*/
