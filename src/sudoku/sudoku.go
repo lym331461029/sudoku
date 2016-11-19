@@ -40,12 +40,10 @@ func (s Sudoku) String() string {
 }
 
 func (suduku *Sudoku) UnmarshalJSON(data []byte) error {
-	type mSudoku struct {
+	ms := &struct {
 		Input       [9][9]int `json:"input"`
 		ProblemType string    `json:"problemType"`
-	}
-
-	ms := &mSudoku{}
+	}{}
 	err := json.Unmarshal(data, ms)
 	if err != nil {
 		return err
