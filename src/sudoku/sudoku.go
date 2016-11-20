@@ -174,21 +174,40 @@ func generateRestrictFunc(XS, XE, YS, YE int8) func(suduku *Sudoku, x, y int8) {
 	}
 }
 
+//因为性能原因，该函数用来替换generateRestrictFunc
+func (suduku *Sudoku) internalRestrict(XS, XE, YS, YE int8, x, y int8) {
+	if x >= XS && x <= XE && y >= YS && y <= YE {
+		for i := XS; i <= XE; i++ {
+			for j := YS; j <= YE; j++ {
+				if x == i && y == j {
+					continue
+				}
+				if suduku.Input[i][j].GetValue() > 0 {
+					suduku.Input[x][y].RemoveFromCache(suduku.Input[i][j].GetValue())
+				}
+			}
+		}
+	}
+}
+
 func (suduku *Sudoku) NineRestrict(x, y int8) int8 {
 	var _XS int8 = x - x%3
 	var _YS int8 = y - y%3
 
-	generateRestrictFunc(_XS, _XS+2, _YS, _YS+2)(suduku, x, y)
+	//generateRestrictFunc(_XS, _XS+2, _YS, _YS+2)(suduku, x, y)
+	suduku.internalRestrict(_XS, _XS+2, _YS, _YS+2, x, y)
 	return suduku.Input[x][y].CacheNum()
 }
 
 func (suduku *Sudoku) RowRestrict(x, y int8) int8 {
-	generateRestrictFunc(x, x, 0, 8)(suduku, x, y)
+	//generateRestrictFunc(x, x, 0, 8)(suduku, x, y)
+	suduku.internalRestrict(x, x, 0, 8, x, y)
 	return suduku.Input[x][y].CacheNum()
 }
 
 func (suduku *Sudoku) ColRestrict(x, y int8) int8 {
-	generateRestrictFunc(0, 8, y, y)(suduku, x, y)
+	//generateRestrictFunc(0, 8, y, y)(suduku, x, y)
+	suduku.internalRestrict(0, 8, y, y, x, y)
 	return suduku.Input[x][y].CacheNum()
 }
 
@@ -228,8 +247,10 @@ func (suduku *Sudoku) XRestrict(x, y int8) int8 {
 
 //百分比数独限定
 func (suduku *Sudoku) PercentumRestrict(x, y int8) int8 {
-	generateRestrictFunc(Start1, End1, Start1, End1)(suduku, x, y)
-	generateRestrictFunc(Start2, End2, Start2, End2)(suduku, x, y)
+	//generateRestrictFunc(Start1, End1, Start1, End1)(suduku, x, y)
+	//generateRestrictFunc(Start2, End2, Start2, End2)(suduku, x, y)
+	suduku.internalRestrict(Start1, End1, Start1, End1, x, y)
+	suduku.internalRestrict(Start2, End2, Start2, End2, x, y)
 
 	if x+y == 8 {
 		for i := 0; i < 9; i++ {
@@ -246,10 +267,15 @@ func (suduku *Sudoku) PercentumRestrict(x, y int8) int8 {
 
 //超数独限定
 func (suduku *Sudoku) SuperRestrict(x, y int8) int8 {
-	generateRestrictFunc(Start1, End1, Start1, End1)(suduku, x, y)
-	generateRestrictFunc(Start2, End2, Start2, End2)(suduku, x, y)
-	generateRestrictFunc(Start1, End1, Start2, End2)(suduku, x, y)
-	generateRestrictFunc(Start2, End2, Start1, End1)(suduku, x, y)
+	//generateRestrictFunc(Start1, End1, Start1, End1)(suduku, x, y)
+	//generateRestrictFunc(Start2, End2, Start2, End2)(suduku, x, y)
+	//generateRestrictFunc(Start1, End1, Start2, End2)(suduku, x, y)
+	//generateRestrictFunc(Start2, End2, Start1, End1)(suduku, x, y)
+
+	suduku.internalRestrict(Start1, End1, Start1, End1, x, y)
+	suduku.internalRestrict(Start2, End2, Start2, End2, x, y)
+	suduku.internalRestrict(Start1, End1, Start2, End2, x, y)
+	suduku.internalRestrict(Start2, End2, Start1, End1, x, y)
 	return suduku.Input[x][y].CacheNum()
 }
 
